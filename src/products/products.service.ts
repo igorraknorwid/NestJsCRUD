@@ -2,7 +2,6 @@
 import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
-import { ProductDto } from './dtos/product.dto';
 import { CreateProductDto } from './dtos/productCreate.dto';
 import { Product } from './product.entity';
 
@@ -14,11 +13,13 @@ const products = [
 @Injectable()
 export class ProductsService {
   constructor(@InjectRepository(Product) private repo: Repository<Product>) {}
-  getProducts(): ProductDto[] {
-    return products;
+  getProducts() {
+    // return products;
+    return this.repo.find();
   }
-  getProduct(id: number): ProductDto {
-    return products.find((product) => product.id === id);
+  getProduct(id: number) {
+    // return products.find((product) => product.id === id);
+    return this.repo.findOne({ where: { id } });
   }
   createProduct(body: CreateProductDto) {
     // const id = Math.round(Math.random() * 1000);
@@ -28,12 +29,16 @@ export class ProductsService {
     const newProduct = this.repo.create({ ...body });
     return this.repo.save(newProduct);
   }
-  deleteProduct(id: number) {
-    return products.filter((product) => product.id !== id);
+  async deleteProduct(id: number) {
+    // return products.filter((product) => product.id !== id);
+    // const products = await this.repo.find();
+    const product = await this.repo.findOne({ where: { id } });
+    await this.repo.remove(product);
+    return `${product.title} has been deleted `;
   }
-  editProductPrice(id: number, price: number) {
-    const product = products.find((prod) => prod.id === id);
+  async editProductPrice(id: number, price: number) {
+    const product = await products.find((prod) => prod.id === id);
     product.price = price;
-    return products;
+    return this.repo.save(product);
   }
 }
